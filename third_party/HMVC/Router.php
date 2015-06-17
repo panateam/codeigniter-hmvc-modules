@@ -36,7 +36,7 @@
 if (!defined("BASEPATH"))
     exit("No direct script access allowed");
 
-class HMVC_Router extends CI_Router {
+class plugin_Router extends CI_Router {
 
     /**
      * Current module name
@@ -44,7 +44,7 @@ class HMVC_Router extends CI_Router {
      * @var string
      * @access public
      */
-    var $module = '';
+    var $plugin = '';
 
     /**
      * Constructor
@@ -56,10 +56,10 @@ class HMVC_Router extends CI_Router {
         $this->config =& load_class('Config', 'core');
 
         // Process 'modules_locations' from config
-        $locations = $this->config->item('modules_locations');
+        $locations = $this->config->item('plugins_locations');
 
         if (!$locations) {
-            $locations = array(APPPATH . 'modules/');
+            $locations = array(APPPATH . 'plugins/');
         } else if (!is_array($locations)) {
             $locations = array($locations);
         }
@@ -71,7 +71,7 @@ class HMVC_Router extends CI_Router {
             $location = rtrim($location, '/') . '/';
         }
 
-        $this->config->set_item('modules_locations', $locations);
+        $this->config->set_item('plugins_locations', $locations);
 
 
         parent::__construct();
@@ -127,9 +127,9 @@ class HMVC_Router extends CI_Router {
         // CI v3.x has URI starting at segment 1
         $segstart = (intval(substr(CI_VERSION,0,1)) > 2) ? 1 : 0;
 
-        if ($module = $this->uri->segment($segstart)) {
+        if ($plugin = $this->uri->segment($segstart)) {
             foreach ($this->config->item('modules_locations') as $location) {
-                if (is_file($file = $location . $module . '/config/routes.php')) {
+                if (is_file($file = $location . $plugin . '/config/routes.php')) {
                     include ($file);
 
                     $route = (!isset($route) or !is_array($route)) ? array() : $route;
@@ -153,7 +153,7 @@ class HMVC_Router extends CI_Router {
         // anon function to ucfirst a string if CI ver > 2 (for backwards compatibility)
         $_ucfirst = function($cn) {return (intval(substr(CI_VERSION,0,1)) > 2) ? ucfirst($cn) : $cn;};
 
-        list($module, $directory, $controller) = array_pad($segments, 3, NULL);
+        list($plugin, $directory, $controller) = array_pad($segments, 3, NULL);
 
         foreach ($this->config->item('modules_locations') as $location) {
             $relative = $location;
@@ -173,9 +173,9 @@ class HMVC_Router extends CI_Router {
             }
 
             // Does a module exist? (/modules/xyz/controllers/)
-            if (is_dir($source = $location . $module . '/controllers/')) {
+            if (is_dir($source = $location . $plugin . '/controllers/')) {
                 $this->module = $module;
-                $this->directory = $relative . $module . '/controllers/';
+                $this->directory = $relative . $plugin . '/controllers/';
 
                 // Module root controller?
                 if ($directory && is_file($source . $_ucfirst($directory) . '.php')) {
@@ -206,7 +206,7 @@ class HMVC_Router extends CI_Router {
                 }
 
                 // Module controller?
-                if (is_file($source . $_ucfirst($module) . '.php')) {
+                if (is_file($source . $_ucfirst($plugin) . '.php')) {
                     return $segments;
                 }
 
@@ -219,18 +219,18 @@ class HMVC_Router extends CI_Router {
         }
 
         // Root folder controller?
-        if (is_file(APPPATH . 'controllers/' . $_ucfirst($module) . '.php')) {
+        if (is_file(APPPATH . 'controllers/' . $_ucfirst($plugin) . '.php')) {
             return $segments;
         }
 
         // Sub-directory controller?
-        if ($directory && is_file(APPPATH . 'controllers/' . $module . '/' . $_ucfirst($directory) . '.php')) {
+        if ($directory && is_file(APPPATH . 'controllers/' . $plugin . '/' . $_ucfirst($directory) . '.php')) {
             $this->directory = $module . '/';
             return array_slice($segments, 1);
         }
 
         // Default controller?
-        if (is_file(APPPATH . 'controllers/' . $module . '/' . $_ucfirst($this->default_controller) . '.php')) {
+        if (is_file(APPPATH . 'controllers/' . $plugin . '/' . $_ucfirst($this->default_controller) . '.php')) {
             $segments[0] = $this->default_controller;
             return $segments;
         }
@@ -242,8 +242,8 @@ class HMVC_Router extends CI_Router {
      * @param	string
      * @return	void
      */
-    function set_module($module) {
-        $this->module = $module;
+    function set_module($plugin) {
+        $this->plugin = $plugin;
     }
 
     /**
@@ -292,6 +292,6 @@ class HMVC_Router extends CI_Router {
      * @return	string
      */
     function fetch_module() {
-        return $this->module;
+        return $this->plugin;
     }
 }
