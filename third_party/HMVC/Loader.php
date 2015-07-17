@@ -1,8 +1,8 @@
 <?php
 /**
- * @name		CodeIgniter HMVC Modules
- * @author		Jens Segers
- * @link		http://www.jenssegers.be
+ * @name		CodeIgniter plguin system
+ * @author		Jens Segers || rewrite by panateam
+ * @link		http://www.jenssegers.be || panateam.ir
  * @license		MIT License Copyright (c) 2012 Jens Segers
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -23,24 +23,20 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  *
- * @author hArpanet - 23-Jun-2014
- *
- *      Widget() method added to load Widgets for Template library by Jens Segers
- *
  */
 
 if (!defined("BASEPATH"))
     exit("No direct script access allowed");
 
-class HMVC_Loader extends CI_Loader {
+class PLUGIN_Loader extends CI_Loader {
 
     /**
-     * List of loaded modules
+     * List of loaded plugins
      *
      * @var array
      * @access protected
      */
-    protected $_ci_modules = array();
+    protected $_ci_plugins = array();
 
     /**
      * List of loaded controllers
@@ -53,15 +49,15 @@ class HMVC_Loader extends CI_Loader {
     /**
      * Constructor
      *
-     * Add the current module to all paths permanently
+     * Add the current plugin to all paths permanently
      */
     public function __construct() {
         parent::__construct();
 
-        // Get current module from the router
+        // Get current plugin from the router
         $router = & $this->_ci_get_component('router');
-        if ($router->module) {
-            $this->add_module($router->module);
+        if ($router->plugin) {
+            $this->add_plugin($router->plugin);
         }
     }
 
@@ -76,24 +72,24 @@ class HMVC_Loader extends CI_Loader {
      * @return	void
      */
     public function controller($uri, $params = array(), $return = FALSE) {
-        // No valid module detected, add current module to uri
-        list($module) = $this->detect_module($uri);
-        if (!isset($module)) {
+        // No valid plugin detected, add current plugin to uri
+        list($plugin) = $this->detect_plugin($uri);
+        if (!isset($plugin)) {
             $router = & $this->_ci_get_component('router');
-            if ($router->module) {
-                $module = $router->module;
-                $uri = $module . '/' . $uri;
+            if ($router->plugin) {
+                $plugin = $router->plugin;
+                $uri = $plugin . '/' . $uri;
             }
         }
 
-        // Add module
-        $this->add_module($module);
+        // Add plugin
+        $this->add_plugin($plugin);
 
         // Execute the controller method and capture output
         $void = $this->_load_controller($uri, $params, $return);
 
-        // Remove module
-        $this->remove_module();
+        // Remove plugin
+        $this->remove_plugin();
 
         return $void;
     }
@@ -117,21 +113,21 @@ class HMVC_Loader extends CI_Loader {
             return;
         }
 
-        // Detect module
-        if (list($module, $class) = $this->detect_module($library)) {
-            // Module already loaded
-            if (in_array($module, $this->_ci_modules)) {
+        // Detect plugin
+        if (list($plugin, $class) = $this->detect_plugin($library)) {
+            // plugin already loaded
+            if (in_array($plugin, $this->_ci_plugins)) {
                 return parent::library($class, $params, $object_name);
             }
 
-            // Add module
-            $this->add_module($module);
+            // Add plugin
+            $this->add_plugin($plugin);
 
             // Let parent do the heavy work
             $void = parent::library($class, $params, $object_name);
 
-            // Remove module
-            $this->remove_module();
+            // Remove plugin
+            $this->remove_plugin();
 
             return $void;
         } else {
@@ -157,21 +153,21 @@ class HMVC_Loader extends CI_Loader {
             return;
         }
 
-        // Detect module
-        if (list($module, $class) = $this->detect_module($model)) {
-            // Module already loaded
-            if (in_array($module, $this->_ci_modules)) {
+        // Detect plugin
+        if (list($plugin, $class) = $this->detect_plugin($model)) {
+            // plugin already loaded
+            if (in_array($plugin, $this->_ci_plugins)) {
                 return parent::model($class, $name, $db_conn);
             }
 
-            // Add module
-            $this->add_module($module);
+            // Add plugin
+            $this->add_plugin($plugin);
 
             // Let parent do the heavy work
             $void = parent::model($class, $name, $db_conn);
 
-            // Remove module
-            $this->remove_module();
+            // Remove plugin
+            $this->remove_plugin();
 
             return $void;
         } else {
@@ -196,21 +192,21 @@ class HMVC_Loader extends CI_Loader {
      * @return	void
      */
     public function view($view, $vars = array(), $return = FALSE) {
-        // Detect module
-        if (list($module, $class) = $this->detect_module($view)) {
-            // Module already loaded
-            if (in_array($module, $this->_ci_modules)) {
+        // Detect plugin
+        if (list($plugin, $class) = $this->detect_plugin($view)) {
+            // Plugin already loaded
+            if (in_array($plugin, $this->_ci_plugins)) {
                 return parent::view($class, $vars, $return);
             }
 
-            // Add module
-            $this->add_module($module);
+            // Add plugin
+            $this->add_plugin($plugin);
 
             // Let parent do the heavy work
             $void = parent::view($class, $vars, $return);
 
-            // Remove module
-            $this->remove_module();
+            // Remove plugin
+            $this->remove_plugin();
 
             return $void;
         } else {
@@ -227,21 +223,21 @@ class HMVC_Loader extends CI_Loader {
      * @return	void
      */
     public function config($file = '', $use_sections = FALSE, $fail_gracefully = FALSE) {
-        // Detect module
-        if (list($module, $class) = $this->detect_module($file)) {
-            // Module already loaded
-            if (in_array($module, $this->_ci_modules)) {
+        // Detect plugin
+        if (list($plugin, $class) = $this->detect_plugin($file)) {
+            // plugin already loaded
+            if (in_array($plugin, $this->_ci_plugins)) {
                 return parent::config($class, $use_sections, $fail_gracefully);
             }
 
-            // Add module
-            $this->add_module($module);
+            // Add plugin
+            $this->add_plugin($plugin);
 
             // Let parent do the heavy work
             $void = parent::config($class, $use_sections, $fail_gracefully);
 
-            // Remove module
-            $this->remove_module();
+            // Remove plugin
+            $this->remove_plugin();
 
             return $void;
         } else {
@@ -265,21 +261,21 @@ class HMVC_Loader extends CI_Loader {
             return;
         }
 
-        // Detect module
-        if (list($module, $class) = $this->detect_module($helper)) {
-            // Module already loaded
-            if (in_array($module, $this->_ci_modules)) {
+        // Detect plugin
+        if (list($plugin, $class) = $this->detect_plugin($helper)) {
+            // plugin already loaded
+            if (in_array($plugin, $this->_ci_plugins)) {
                 return parent::helper($class);
             }
 
-            // Add module
-            $this->add_module($module);
+            // Add plugin
+            $this->add_plugin($plugin);
 
             // Let parent do the heavy work
             $void = parent::helper($class);
 
-            // Remove module
-            $this->remove_module();
+            // Remove plugin
+            $this->remove_plugin();
 
             return $void;
         } else {
@@ -302,21 +298,21 @@ class HMVC_Loader extends CI_Loader {
             return;
         }
 
-        // Detect module
-        if (list($module, $class) = $this->detect_module($file)) {
-            // Module already loaded
-            if (in_array($module, $this->_ci_modules)) {
+        // Detect plugin
+        if (list($plugin, $class) = $this->detect_plugin($file)) {
+            // plugin already loaded
+            if (in_array($plugin, $this->_ci_plugins)) {
                 return parent::language($class, $lang);
             }
 
-            // Add module
-            $this->add_module($module);
+            // Add plugin
+            $this->add_plugin($plugin);
 
             // Let parent do the heavy work
             $void = parent::language($class, $lang);
 
-            // Remove module
-            $this->remove_module();
+            // Remove plugin
+            $this->remove_plugin();
 
             return $void;
         } else {
@@ -328,53 +324,53 @@ class HMVC_Loader extends CI_Loader {
      * Load Widget
      *
      * This function provides support to Jens Segers Template Library for loading
-     * widget controllers within modules (place in module/widgets folder).
+     * widget controllers within plugins (place in plugin/widgets folder).
      * @author  hArpanet - 23-Jun-2014
      *
-     * @param   string $widget  Must contain Module name if widget within a module
-     *                          (eg. test/nav  where module name is 'test')
+     * @param   string $widget  Must contain plugin name if widget within a plugin
+     *                          (eg. test/nav  where plugin name is 'test')
      * @return  array|false
      */
     public function widget($widget) {
 
-        // Detect module
-        if (list($module, $widget) = $this->detect_module($widget)) {
-            // Module already loaded
-            if (in_array($module, $this->_ci_modules)) {
-                return array($module, $widget);
+        // Detect plugin
+        if (list($plugin, $widget) = $this->detect_plugin($widget)) {
+            // Plugin already loaded
+            if (in_array($plugin, $this->_ci_plugins)) {
+                return array($plugin, $widget);
             }
 
-            // Add module
-            $this->add_module($module);
+            // Add plugin
+            $this->add_plugin($plugin);
 
-            // Look again now we've added new module path
-            $void = $this->widget($module.'/'.$widget);
+            // Look again now we've added new plugin path
+            $void = $this->widget($plugin.'/'.$widget);
 
-            // Remove module if widget not found within it
+            // Remove plugin if widget not found within it
             if (!$void) {
-                $this->remove_module();
+                $this->remove_plugin();
             }
 
             return $void;
 
         } else {
-            // widget not found in module
+            // widget not found in plugin
             return FALSE;
         }
     }
 
     /**
-     * Add Module
+     * Add plugin
      *
-     * Allow resources to be loaded from this module path
+     * Allow resources to be loaded from this plugin path
      *
      * @param	string
      * @param 	boolean
      */
-    public function add_module($module, $view_cascade = TRUE) {
-        if ($path = $this->find_module($module)) {
-            // Mark module as loaded
-            array_unshift($this->_ci_modules, $module);
+    public function add_plugin($plugin, $view_cascade = TRUE) {
+        if ($path = $this->find_plugin($plugin)) {
+            // Mark plugin as loaded
+            array_unshift($this->_ci_plugins, $plugin);
 
             // Add package path
             parent::add_package_path($path, $view_cascade);
@@ -382,24 +378,24 @@ class HMVC_Loader extends CI_Loader {
     }
 
     /**
-     * Remove Module
+     * Remove Plugin
      *
-     * Remove a module from the allowed module paths
+     * Remove a plugin from the allowed plugin paths
      *
      * @param	type
      * @param 	bool
      */
-    public function remove_module($module = '', $remove_config = TRUE) {
-        if ($module == '') {
-            // Mark module as not loaded
-            array_shift($this->_ci_modules);
+    public function remove_plugin($plugin = '', $remove_config = TRUE) {
+        if ($plugin == '') {
+            // Mark plugin as not loaded
+            array_shift($this->_ci_plugins);
 
             // Remove package path
             parent::remove_package_path('', $remove_config);
-        } else if (($key = array_search($module, $this->_ci_modules)) !== FALSE) {
-            if ($path = $this->find_module($module)) {
-                // Mark module as not loaded
-                unset($this->_ci_modules[$key]);
+        } else if (($key = array_search($plugin, $this->_ci_plugins)) !== FALSE) {
+            if ($path = $this->find_plugin($plugin)) {
+                // Mark plugin as not loaded
+                unset($this->_ci_plugins[$key]);
 
                 // Remove package path
                 parent::remove_package_path($path, $remove_config);
@@ -422,7 +418,7 @@ class HMVC_Loader extends CI_Loader {
 
         // Back up current router values (before loading new controller)
         $backup = array();
-        foreach (array('directory', 'class', 'method', 'module') as $prop) {
+        foreach (array('directory', 'class', 'method', 'plugin') as $prop) {
             $backup[$prop] = $router->{$prop};
         }
 
@@ -485,20 +481,20 @@ class HMVC_Loader extends CI_Loader {
     }
 
     /**
-     * Detects the module from a string. Returns the module name and class if found.
+     * Detects the plugin from a string. Returns the plugin name and class if found.
      *
      * @param	string
      * @return	array|boolean
      */
-    private function detect_module($class) {
+    private function detect_plugin($class) {
         $class = str_replace('.php', '', trim($class, '/'));
         if (($first_slash = strpos($class, '/')) !== FALSE) {
-            $module = substr($class, 0, $first_slash);
+            $plugin = substr($class, 0, $first_slash);
             $class = substr($class, $first_slash + 1);
 
-            // Check if module exists
-            if ($this->find_module($module)) {
-                return array($module, $class);
+            // Check if plugin exists
+            if ($this->find_plugin($plugin)) {
+                return array($plugin, $class);
             }
         }
 
@@ -506,17 +502,17 @@ class HMVC_Loader extends CI_Loader {
     }
 
     /**
-     * Searches a given module name. Returns the path if found, FALSE otherwise
+     * Searches a given plugin name. Returns the path if found, FALSE otherwise
      *
-     * @param string $module
+     * @param string $plugin
      * @return string|boolean
      */
-    private function find_module($module) {
+    private function find_plugin($plugin) {
         $config = & $this->_ci_get_component('config');
 
-        // Check all locations for this module
-        foreach ($config->item('modules_locations') as $location) {
-            $path = $location . rtrim($module, '/') . '/';
+        // Check all locations for this plugin
+        foreach ($config->item('plugins_locations') as $location) {
+            $path = $location . rtrim($plugin, '/') . '/';
             if (is_dir($path)) {
                 return $path;
             }
